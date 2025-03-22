@@ -1,7 +1,7 @@
 {
   "name": "dsw_accountsbackend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Accounts Backend for Orion Frontend",
   "homepage": "https://github.com/AlbertoCazallasMonje/DSW_AccountsBackend#readme",
   "bugs": {
     "url": "https://github.com/AlbertoCazallasMonje/DSW_AccountsBackend/issues"
@@ -15,6 +15,14 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node Http/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "mssql": "^11.0.1",
+    "swagger": "^0.7.5",
+    "swagger-ui-express": "^5.0.1"
   }
 }
