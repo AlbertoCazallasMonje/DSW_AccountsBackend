@@ -1,7 +1,6 @@
 const sql = require('mssql');
 const IAccountRepository = require('../../Domain/Accounts/IAccountsRepository');
 const sqlConfig = require('../../App/Config/SqlServerConfig');
-const AccountsController = require("../../Http/Accounts/AccountsController");
 
 class AccountsRepository extends IAccountRepository {
     async Create(account) {
@@ -18,6 +17,28 @@ class AccountsRepository extends IAccountRepository {
                 VALUES (@b_id, @b_country, @b_IBAN, @u_dni, @b_balance)
             `);
             await pool.close();
+        } catch (err) {
+            console.error('SQL error', err);
+            throw err;
+        }
+    }
+
+    async FindAccountByDni({dni}) {
+        try {
+            let pool = await sql.connect(sqlConfig.config);
+            let result = await pool.request()
+                .input('u_dni', sql.NVarChar(9), dni)
+                .query(`
+                SELECT b_id
+                FROM bank_accounts
+                WHERE u_dni = @u_dni
+            `);
+            await pool.close();
+            if (result.recordset.length === 0) {
+                throw new Error("No account found for the provided DNI");
+            }
+
+            return result.recordset[0];
         } catch (err) {
             console.error('SQL error', err);
             throw err;
