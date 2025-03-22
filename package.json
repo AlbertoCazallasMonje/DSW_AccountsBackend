@@ -1,0 +1,20 @@
+{
+  "name": "dsw_accountsbackend",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/AlbertoCazallasMonje/DSW_AccountsBackend#readme",
+  "bugs": {
+    "url": "https://github.com/AlbertoCazallasMonje/DSW_AccountsBackend/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlbertoCazallasMonje/DSW_AccountsBackend.git"
+  },
+  "license": "ISC",
+  "author": "Alberto Cazallas Monje",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
