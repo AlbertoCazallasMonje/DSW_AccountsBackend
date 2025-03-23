@@ -8,6 +8,8 @@ const CommonController = require('./Common/CommonController');
 const commonController = new CommonController();
 const AccountsController = require('./Accounts/AccountsController');
 const accountsController = new AccountsController();
+const CardsController = require('./Cards/CardsController');
+const cardsController = new CardsController();
 const cors = require('cors');
 app.use(cors());
 app.use(express.json());
@@ -22,6 +24,9 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Accounts
 router.post('/create', accountsController.CreateAccount.bind(accountsController));
+router.get('/find', accountsController.FindAccountByDni.bind(accountsController));
+// Cards
+router.post('/createCard', cardsController.CreateCard.bind(cardsController));
 
 // Initialize Server
 const port = config.server.port;
