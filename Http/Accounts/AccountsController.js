@@ -1,7 +1,6 @@
 const AccountCreator = require('../../Application/Accounts/Creator/AccountCreator');
 const AccountRepository = require('../../Infrastructure/Accounts/AccountsRepository');
 const AccountFinder = require("../../Application/Accounts/Finder/AccountFinder");
-const CardsRepository = require('../../Infrastructure/Cards/CardsRepository');
 
 class AccountsController {
 

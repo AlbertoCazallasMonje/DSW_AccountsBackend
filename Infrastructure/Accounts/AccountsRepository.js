@@ -44,5 +44,23 @@ class AccountsRepository extends IAccountRepository {
             throw err;
         }
     }
+
+    async UpdateBalance(accountId, quantity) {
+        try {
+            let pool = await sql.connect(sqlConfig.config);
+            await pool.request()
+                .input('accountId', sql.UniqueIdentifier, accountId.b_id)
+                .input('quantity', sql.Decimal(18,2), quantity)
+                .query(`
+                    UPDATE bank_accounts
+                    SET b_balance = b_balance + @quantity
+                    WHERE b_id = @accountId
+                `);
+            await pool.close();
+        } catch (err) {
+            console.error('SQL error in UpdateBalance', err);
+            throw err;
+        }
+    }
 }
 module.exports = AccountsRepository;
