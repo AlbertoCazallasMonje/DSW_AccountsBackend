@@ -10,6 +10,8 @@ const AccountsController = require('./Accounts/AccountsController');
 const accountsController = new AccountsController();
 const CardsController = require('./Cards/CardsController');
 const cardsController = new CardsController();
+const TopUpsController = require('./TopUps/TopUpsController');
+const topUpsController = new TopUpsController();
 const cors = require('cors');
 app.use(cors());
 app.use(express.json());
@@ -27,9 +29,12 @@ router.post('/create', accountsController.CreateAccount.bind(accountsController)
 router.get('/find', accountsController.FindAccountByDni.bind(accountsController));
 // Cards
 router.post('/createCard', cardsController.CreateCard.bind(cardsController));
+// TopUps
+router.post('/topUp', topUpsController.AddMoneyToAccount.bind(topUpsController));
 
 // Initialize Server
 const port = config.server.port;
-app.listen(port, () => {
+const server = app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
+server.timeout = 0;
