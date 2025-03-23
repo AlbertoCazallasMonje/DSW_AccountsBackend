@@ -19,8 +19,7 @@ class AccountsController {
     async FindAccountByDni(req, res) {
         try {
             const accountRepository = new AccountRepository();
-            const cardRepository = new CardsRepository();
-            const accountFinder = new AccountFinder(cardRepository, accountRepository);
+            const accountFinder = new AccountFinder(accountRepository);
             const account = await accountFinder.Execute(req.body);
             res.status(200).json(account);
         } catch (error) {
