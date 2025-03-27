@@ -29,6 +29,7 @@ router.post('/create', accountsController.CreateAccount.bind(accountsController)
 router.post('/find', accountsController.FindAccountByDni.bind(accountsController));
 // Cards
 router.post('/createCard', cardsController.CreateCard.bind(cardsController));
+router.get('/validateCard', cardsController.ValidateCard.bind(cardsController))
 // TopUps
 router.post('/topUp', topUpsController.AddMoneyToAccount.bind(topUpsController));
 
