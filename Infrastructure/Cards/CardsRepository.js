@@ -23,5 +23,31 @@ class CardsRepository extends ICardsRepository{
             throw err;
         }
     }
+
+    async ValidateCard(card){
+        try {
+            let pool = await sql.connect(sqlConfig.config);
+            const result = await pool.request()
+                .input('cc_id', sql.UniqueIdentifier, card.cc_id)
+                .input('b_id', sql.UniqueIdentifier, card.b_id)
+                .input('cc_number', sql.VarChar(16), card.cc_number)
+                .input('cc_expirationDate', sql.Date, card.cc_expirationDate)
+                .input('cc_cvv', sql.Char(3), card.cc_cvv)
+                .query(`
+                    SELECT * FROM credit_cards
+                    WHERE cc_id = @cc_id
+                      AND b_id = @b_id
+                      AND cc_number = @cc_number
+                      AND cc_expirationDate = @cc_expirationDate
+                      AND cc_cvv = @cc_cvv
+                `);
+            await pool.close();
+            const exists = result.recordset && result.recordset.length > 0;
+            return exists;
+        } catch (err) {
+            console.error('SQL error in exists', err);
+            throw err;
+        }
+    }
 }
 module.exports = CardsRepository;
