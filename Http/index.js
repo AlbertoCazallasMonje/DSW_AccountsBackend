@@ -26,7 +26,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Accounts
 router.post('/create', accountsController.CreateAccount.bind(accountsController));
-router.get('/find', accountsController.FindAccountByDni.bind(accountsController));
+router.post('/find', accountsController.FindAccountByDni.bind(accountsController));
 // Cards
 router.post('/createCard', cardsController.CreateCard.bind(cardsController));
 // TopUps

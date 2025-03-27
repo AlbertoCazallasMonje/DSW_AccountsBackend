@@ -29,7 +29,7 @@ class AccountsRepository extends IAccountRepository {
             let result = await pool.request()
                 .input('u_dni', sql.NVarChar(9), dni)
                 .query(`
-                SELECT b_id
+                SELECT b_id, b_balance, b_IBAN, b_country
                 FROM bank_accounts
                 WHERE u_dni = @u_dni
             `);
