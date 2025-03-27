@@ -1,6 +1,7 @@
 const AccountCreator = require('../../Application/Accounts/Creator/AccountCreator');
 const AccountRepository = require('../../Infrastructure/Accounts/AccountsRepository');
 const AccountFinder = require("../../Application/Accounts/Finder/AccountFinder");
+const CommonController = require("../Common/CommonController");
 
 class AccountsController {
 
@@ -19,7 +20,9 @@ class AccountsController {
         try {
             const accountRepository = new AccountRepository();
             const accountFinder = new AccountFinder(accountRepository);
-            const account = await accountFinder.Execute(req.body);
+            const commonController = new CommonController();
+            const dni = await commonController.FindUser(req.body.sessionToken, req.body.actionToken)
+            const account = await accountFinder.Execute(dni);
             res.status(200).json(account);
         } catch (error) {
             res.status(400).json({error: error.message});
