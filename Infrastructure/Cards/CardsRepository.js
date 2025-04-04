@@ -49,5 +49,22 @@ class CardsRepository extends ICardsRepository{
             throw err;
         }
     }
+    async SearchCards(b_id) {
+        try {
+            let pool = await sql.connect(sqlConfig.config);
+            const result = await pool.request()
+                .input('b_id', sql.UniqueIdentifier, b_id)
+                .query(`
+                SELECT cc_id, b_id, cc_number, cc_expirationDate, cc_cvv
+                FROM credit_cards
+                WHERE b_id = @b_id
+            `);
+            await pool.close();
+            return result.recordset;
+        } catch (err) {
+            if (pool) await pool.close();
+            throw err;
+        }
+    }
 }
 module.exports = CardsRepository;

@@ -6,5 +6,9 @@ class ICardsRepository {
     async ValidateCard(card){
         throw new Error('Error while validating a card.');
     }
+
+    async SearchCards(b_id) {
+        throw new Error('Error while searching cards.');
+    }
 }
 module.exports = ICardsRepository;
