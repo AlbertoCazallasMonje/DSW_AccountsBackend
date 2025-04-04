@@ -9,7 +9,7 @@ class CardsRepository extends ICardsRepository{
             let pool = await sql.connect(sqlConfig.config);
             await pool.request()
                 .input('cc_id', sql.UniqueIdentifier, card.getCc_id())
-                .input('b_id', sql.UniqueIdentifier, card.getB_id())
+                .input('b_id', sql.UniqueIdentifier, card.getB_id()) // Se usa b_id.
                 .input('cc_number', sql.VarChar(16), card.getCc_number())
                 .input('cc_expirationDate', sql.Date, card.getCc_expirationDate())
                 .input('cc_cvv', sql.Char(3), card.getCc_cvv())
