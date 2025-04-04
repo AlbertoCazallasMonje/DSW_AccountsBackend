@@ -8,7 +8,7 @@ class CardsController {
     async CreateCard(req, res) {
         try {
             const commonController = new CommonController();
-            const {sessionToken, actionToken} = req.body;
+            const { sessionToken, actionToken, card } = req.body;
             const validateSessionResponse = await commonController.ValidateSession(sessionToken);
             if (!validateSessionResponse.success) {
                 throw new Error(validateSessionResponse.error || 'Error validating session');
@@ -35,11 +35,17 @@ class CardsController {
             const accountRepository = new AccountRepository();
             const cardRepository = new CardRepository();
             const cardCreator = new CardCreator(cardRepository, accountRepository);
-            await cardCreator.Execute({dni});
+            
+            await cardCreator.Execute({
+                dni,
+                cc_number: card.cc_number,
+                cc_expirationDate: card.cc_expirationDate,
+                cc_cvv: card.cc_cvv
+            });
 
-            res.status(201).json({message: 'Card created successfully'});
+            res.status(201).json({ message: 'Card created successfully' });
         } catch (error) {
-            res.status(400).json({error: error.message});
+            res.status(400).json({ error: error.message });
         }
     }
 
