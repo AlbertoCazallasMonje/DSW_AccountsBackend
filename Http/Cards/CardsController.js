@@ -3,6 +3,7 @@ const CardRepository = require('../../Infrastructure/Cards/CardsRepository');
 const AccountRepository = require('../../Infrastructure/Accounts/AccountsRepository');
 const CommonController = require("../Common/CommonController");
 const CardValidator = require("../../Application/Cards/Validator/CardValidator");
+const CardSearcher = require("../../Application/Cards/Searcher/CardSearcher");
 
 class CardsController {
     async CreateCard(req, res) {
@@ -35,7 +36,7 @@ class CardsController {
             const accountRepository = new AccountRepository();
             const cardRepository = new CardRepository();
             const cardCreator = new CardCreator(cardRepository, accountRepository);
-            
+
             await cardCreator.Execute({
                 dni,
                 cc_number: card.cc_number,
@@ -82,6 +83,43 @@ class CardsController {
             res.status(400).json({
                 error: error.message
             });
+        }
+    }
+
+    async SearchCard(req, res) {
+        try {
+            const commonController = new CommonController();
+            const { sessionToken, actionToken } = req.body;
+            const validateSessionResponse = await commonController.ValidateSession(sessionToken);
+            if (!validateSessionResponse.success) {
+                throw new Error(validateSessionResponse.error || 'Error validating session');
+            }
+
+            const findUserTokenResponse = await commonController.RequestToken(sessionToken, 'FIND-USER');
+            if (!findUserTokenResponse.success) {
+                throw new Error(findUserTokenResponse.error || 'Error requesting token');
+            }
+
+            const findUserToken = findUserTokenResponse.data.actionToken;
+            const findUserResponse = await commonController.FindUser(sessionToken, findUserToken);
+            if (!findUserResponse.success) {
+                throw new Error(findUserResponse.error || 'Error finding user');
+            }
+            const dni = findUserResponse.dni;
+
+            const searchCardTokenResponse = await commonController.ValidateActionToken(sessionToken, actionToken, 'SEARCH-CARD');
+            if (!searchCardTokenResponse.success) {
+                throw new Error(searchCardTokenResponse.error || 'Error validating token');
+            }
+
+            const cardRepository = new CardRepository();
+            const cardSearcher = new CardSearcher(cardRepository);
+
+            const cards = await cardSearcher.Execute(dni);
+
+            res.status(200).json(cards);
+        } catch (error) {
+            res.status(400).json({ error: error.message });
         }
     }
 }
