@@ -6,56 +6,42 @@ class CardCreator {
         this.accountRepository = accountRepository;
     }
 
-    async Execute(dni) {
+    async Execute({ dni, cc_number, cc_expirationDate, cc_cvv }) {
         try {
-            const account = await this.accountRepository.FindAccountByDni(dni);
+            if (!/^\d{16}$/.test(cc_number)) {
+                throw new Error('Error in card format: Card number must contain 16 numeric characters.');
+            }
+            if (!/^\d{3}$/.test(cc_cvv)) {
+                throw new Error('Error in card format: CVV must contain 3 numeric characters.');
+            }
 
-            const cc_id = this._generateCcId();
-            const cc_number = this._generateCcNumber();
-            const cc_expirationDate = this._generateCcExpirationDate();
-            const cc_cvv = this._generateCcCvv();
+            const expirationDate = new Date(cc_expirationDate);
+            if (isNaN(expirationDate.getTime())) {
+                throw new Error('Error in card format: Invalid expiration date format.');
+            }
+            if (expirationDate <= new Date()) {
+                throw new Error('Error in card format: Invalid expiration date.');
+            }
 
+            const account = await this.accountRepository.FindAccountByDni({dni});
+            if (!account) {
+                throw new Error('Error finding user account.');
+            }
+
+            const cc_id = uuidv4();
             const card = CardsDomain.Create({
                 cc_id,
                 b_id: account.b_id,
                 cc_number,
-                cc_expirationDate,
+                cc_expirationDate: expirationDate,
                 cc_cvv
             });
 
             return await this.cardRepository.CreateCard(card);
         } catch (err) {
-            console.error('Error while creating a card.', err);
+            console.error('Error creating the card.', err);
             throw err;
         }
-    }
-
-    _generateCcId() {
-        return uuidv4();
-    }
-
-    _generateCcNumber() {
-        const digits = '0123456789';
-        let cc_number = '';
-        for (let i = 0; i < 16; i++) {
-            cc_number += digits.charAt(Math.floor(Math.random() * digits.length));
-        }
-        return cc_number;
-    }
-
-    _generateCcExpirationDate() {
-        const expirationDate = new Date();
-        expirationDate.setFullYear(expirationDate.getFullYear() + 3);
-        return expirationDate;
-    }
-
-    _generateCcCvv() {
-        const digits = '0123456789';
-        let cc_cvv = '';
-        for (let i = 0; i < 3; i++) {
-            cc_cvv += digits.charAt(Math.floor(Math.random() * digits.length));
-        }
-        return cc_cvv;
     }
 }
 
