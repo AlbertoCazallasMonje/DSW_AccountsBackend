@@ -12,6 +12,8 @@ const CardsController = require('./Cards/CardsController');
 const cardsController = new CardsController();
 const TopUpsController = require('./TopUps/TopUpsController');
 const topUpsController = new TopUpsController();
+const TransactionsController = require('./Transactions/TransactionController');
+const transactionsController = new TransactionsController();
 const cors = require('cors');
 app.use(cors());
 app.use(express.json());
@@ -31,9 +33,12 @@ router.post('/searchCards', cardsController.SearchCard.bind(cardsController));
 // TopUps
 router.post('/topUp', topUpsController.AddMoneyToAccount.bind(topUpsController));
 
+// Transactions
+router.post('/performTransaction', transactionsController.PerformTransaction.bind(transactionsController));
+
 // Initialize Server
 const port = config.server.port;
 const server = app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
-server.timeout = 0;
+server.timeout = 1500;
