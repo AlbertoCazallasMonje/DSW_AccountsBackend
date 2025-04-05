@@ -85,6 +85,22 @@ class CommonController {
         }
     }
 
+    async FindReceiver(sessionToken, findReceiverToken, email) {
+        try {
+            const url = 'http://localhost:3000/findByEmail';
+            const response = await axios.post(url, { sessionToken, findReceiverToken, email });
+            if (response.status === 200) {
+                const { u_dni } = response.data;
+                return { success: true, dni: u_dni };
+            }
+            return { success: false, error: 'Error: ' + response.status };
+        } catch (error) {
+            if (error.response) {
+                return { success: false, statusCode: error.response.status, error: error.response.data?.error };
+            }
+            return { success: false, error: error.message };
+        }
+    }
 }
 
 module.exports = CommonController;
