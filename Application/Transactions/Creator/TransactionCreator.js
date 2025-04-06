@@ -24,6 +24,7 @@ class TransactionCreator {
                 sender_dni: sender_dni,
                 receiver_dni: receiver_dni,
                 amount: amount,
+                t_state: 'ACCEPTED',
                 created_at: new Date()
             };
 

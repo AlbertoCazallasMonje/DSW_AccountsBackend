@@ -5,7 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 class TransactionsRepository{
 
     async CreateTransaction(transaction) {
-        const { sender_dni, receiver_dni, amount, created_at, t_message } = transaction;
+        const { sender_dni, receiver_dni, amount, t_message, t_state, t_date } = transaction;
         const t_id = uuidv4();
 
         const newTransaction = {
@@ -14,8 +14,8 @@ class TransactionsRepository{
             dni_receiver: receiver_dni,
             t_message: t_message || null,
             amount: parseFloat(amount.toFixed(2)),
-            t_state: 'ACCEPTED',
-            t_date: created_at || new Date()
+            t_state: t_state,
+            t_date: t_date || new Date()
         };
 
         const query = `
@@ -42,6 +42,5 @@ class TransactionsRepository{
             throw error;
         }
     }
-
 }
 module.exports = TransactionsRepository;
