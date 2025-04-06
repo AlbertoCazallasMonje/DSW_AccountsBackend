@@ -82,5 +82,23 @@ class TransactionsRepository{
             throw error;
         }
     }
+
+    async GetPendingTransactionsBySender(dni) {
+        const query = `
+    SELECT * FROM transactions
+    WHERE dni_sender = @dni AND t_state = 'PENDING'
+  `;
+        try {
+            let pool = await sql.connect(sqlConfig.config);
+            const result = await pool.request()
+                .input('dni', sql.NVarChar(9), dni)
+                .query(query);
+            await pool.close();
+            return result.recordset;
+        } catch (error) {
+            console.error("Error fetching pending transactions:", error);
+            throw error;
+        }
+    }
 }
 module.exports = TransactionsRepository;

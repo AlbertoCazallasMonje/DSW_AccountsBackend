@@ -4,6 +4,7 @@ const TransactionsRepository = require("../../Infrastructure/Transactions/Transa
 const TransactionCreator = require("../../Application/Transactions/Creator/TransactionCreator");
 const MoneyRequest = require("../../Application/Transactions/Request/MoneyRequest");
 const RequestResolver = require("../../Application/Transactions/Resolver/RequestResolver");
+const PendingRequestSearcher = require("../../Application/Transactions/Searcher/PendingRequestSearcher");
 
 class TransactionController {
     async PerformTransaction(req, res) {
@@ -148,6 +149,42 @@ class TransactionController {
             await requestResolver.Execute(sessionUser_dni, transactionId, resolution);
 
             res.status(200).json({ message: 'Transaction resolved successfully' });
+        } catch (err) {
+            res.status(400).json({ error: err.message });
+        }
+    }
+
+    async LoadTransactions(req, res) {
+        try {
+            const commonController = new CommonController();
+            const { sessionToken, actionToken } = req.body;
+
+            const validateSessionResponse = await commonController.ValidateSession(sessionToken);
+            if (!validateSessionResponse.success) {
+                throw new Error(validateSessionResponse.error || 'Error validating session');
+            }
+
+            const validateActionTokenResponse = await commonController.ValidateActionToken(sessionToken, actionToken, 'LOAD-TRANSACTIONS');
+            if (!validateActionTokenResponse.success) {
+                throw new Error(validateActionTokenResponse.error || 'Error validating action token');
+            }
+
+            const findUserTokenResponse = await commonController.RequestToken(sessionToken, 'FIND-USER');
+            if (!findUserTokenResponse.success) {
+                throw new Error(findUserTokenResponse.error || 'Error requesting token');
+            }
+            const findUserToken = findUserTokenResponse.data.actionToken;
+            const findUserResponse = await commonController.FindUser(sessionToken, findUserToken);
+            if (!findUserResponse.success) {
+                throw new Error(findUserResponse.error || 'Error finding user');
+            }
+            const sender_dni = findUserResponse.dni;
+
+            const transactionsRepository = new TransactionsRepository();
+            const pendingRequestSearcher = new PendingRequestSearcher(transactionsRepository);
+            const transactions = await pendingRequestSearcher.Execute(sender_dni);
+
+            res.status(200).json({ transactions });
         } catch (err) {
             res.status(400).json({ error: err.message });
         }
