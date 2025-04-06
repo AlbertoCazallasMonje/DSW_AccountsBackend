@@ -42,5 +42,45 @@ class TransactionsRepository{
             throw error;
         }
     }
+
+    async GetTransactionById(t_id) {
+        const query = `
+      SELECT * FROM transactions
+      WHERE t_id = @t_id
+    `;
+        try {
+            let pool = await sql.connect(sqlConfig.config);
+            const result = await pool.request()
+                .input('t_id', sql.UniqueIdentifier, t_id)
+                .query(query);
+            await pool.close();
+            if (result.recordset.length === 0) return null;
+            return result.recordset[0];
+        } catch (error) {
+            console.error("Error fetching transaction:", error);
+            throw error;
+        }
+    }
+
+    async UpdateTransactionStatus(t_id, newStatus) {
+        const query = `
+      UPDATE transactions
+      SET t_state = @newStatus
+      WHERE t_id = @t_id
+    `;
+        try {
+            let pool = await sql.connect(sqlConfig.config);
+            await pool.request()
+                .input('t_id', sql.UniqueIdentifier, t_id)
+                .input('newStatus', sql.NVarChar(8), newStatus)
+                .query(query);
+            await pool.close();
+            console.log(`Transaction ${t_id} updated to ${newStatus}`);
+            return true;
+        } catch (error) {
+            console.error("Error updating transaction status:", error);
+            throw error;
+        }
+    }
 }
 module.exports = TransactionsRepository;
