@@ -5,6 +5,7 @@ const TransactionCreator = require("../../Application/Transactions/Creator/Trans
 const MoneyRequest = require("../../Application/Transactions/Request/MoneyRequest");
 const RequestResolver = require("../../Application/Transactions/Resolver/RequestResolver");
 const PendingRequestSearcher = require("../../Application/Transactions/Searcher/PendingRequestSearcher");
+const TransactionLoader = require("../../Application/Transactions/TransactionLoader");
 
 class TransactionController {
     async PerformTransaction(req, res) {
@@ -187,6 +188,49 @@ class TransactionController {
             res.status(200).json({ transactions });
         } catch (err) {
             res.status(400).json({ error: err.message });
+        }
+    }
+
+    async AdminLoadTransactions(req, res){
+        try {
+            const commonController = new CommonController();
+            const { sessionToken, actionToken } = req.body;
+
+            const validateSessionResponse = await commonController.ValidateSession(sessionToken);
+            if (!validateSessionResponse.success) {
+                return res.status(400).json({ error: validateSessionResponse.error || 'Error validating session' });
+            }
+
+            const validateActionTokenResponse = await commonController.ValidateActionToken(sessionToken, actionToken, 'ADMIN-LOAD-TRANSACTIONS');
+            if (!validateActionTokenResponse.success) {
+                return res.status(400).json({ error: validateActionTokenResponse.error || 'Error validating action token' });
+            }
+
+            const findUserTokenResponse = await commonController.RequestToken(sessionToken, 'FIND-USER');
+            if (!findUserTokenResponse.success) {
+                throw new Error(findUserTokenResponse.error || 'Error requesting token');
+            }
+            const findUserToken = findUserTokenResponse.data.actionToken;
+
+            const findUserResponse = await commonController.FindUser(sessionToken, findUserToken);
+            if (!findUserResponse.success) {
+                throw new Error(findUserResponse.error || 'Error finding user');
+            }
+            const is_admin = findUserResponse.is_admin;
+            if (!is_admin) {
+                return res.status(403).json({ error: 'User is not admin' });
+            }
+
+            const transactionsRepository = new TransactionsRepository();
+            const adminTransactionLoader = new TransactionLoader(transactionsRepository);
+            const transactions = await adminTransactionLoader.Execute();
+
+            if (!transactions || transactions.length === 0) {
+                return res.status(404).json({ error: 'No transactions found' });
+            }
+            return res.status(200).json({ transactions });
+        } catch (err) {
+            return res.status(400).json({ error: err.message });
         }
     }
 }

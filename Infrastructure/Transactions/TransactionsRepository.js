@@ -100,5 +100,22 @@ class TransactionsRepository{
             throw error;
         }
     }
+
+    async LoadTransactions() {
+        try {
+            let pool = await sql.connect(sqlConfig.config);
+            let result = await pool.request()
+                .query(`
+                SELECT t_id, dni_sender, dni_receiver, t_message, amount, t_state, t_date
+                FROM transactions
+            `);
+            await pool.close();
+            return result.recordset;
+        } catch (err) {
+            console.error('SQL error in LoadTransactions', err);
+            throw err;
+        }
+    }
+
 }
 module.exports = TransactionsRepository;
