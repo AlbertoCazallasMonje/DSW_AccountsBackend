@@ -54,7 +54,8 @@ class CommonController {
             const response = await axios.post(url, { sessionToken, actionToken });
             if (response.status === 200) {
                 const { u_dni } = response.data;
-                return { success: true, dni: u_dni };
+                const {is_admin}  = response.data;
+                return { success: true, dni: u_dni, is_admin : is_admin};
             }
             return { success: false, error: 'Error: ' + response.status };
         } catch (error) {
