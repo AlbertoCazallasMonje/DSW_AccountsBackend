@@ -37,6 +37,7 @@ router.post('/topUp', topUpsController.AddMoneyToAccount.bind(topUpsController))
 router.post('/performTransaction', transactionsController.PerformTransaction.bind(transactionsController));
 router.post('/requestMoney', transactionsController.RequestMoney.bind(transactionsController));
 router.post('/resolveRequest', transactionsController.ResolveRequest.bind(transactionsController));
+router.post('/loadPendingTransactions', transactionsController.LoadTransactions.bind(transactionsController));
 
 // Initialize Server
 const port = config.server.port;
