@@ -86,7 +86,7 @@ class CommonController {
         }
     }
 
-    async FindReceiver(sessionToken, findReceiverToken, email) {
+    async FindByEmail(sessionToken, findReceiverToken, email) {
         try {
             const url = 'http://localhost:3000/findByEmail';
             const response = await axios.post(url, { sessionToken, findReceiverToken, email });
