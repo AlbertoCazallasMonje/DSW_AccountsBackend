@@ -1,8 +1,8 @@
 const sql = require('mssql');
 const sqlConfig = require('../../App/Config/SqlServerConfig');
-const { v4: uuidv4 } = require('uuid');
+const {v4: uuidv4} = require('uuid');
 
-class TransactionsRepository{
+class TransactionsRepository {
 
     async CreateTransaction(transaction) {
         const {
@@ -28,12 +28,10 @@ class TransactionsRepository{
         };
 
         const query = `
-            INSERT INTO transactions (
-                t_id, dni_sender, dni_receiver, t_message, amount, t_state, t_date, split_group_id
-            ) VALUES (
-                         @t_id, @dni_sender, @dni_receiver, @t_message,
-                         @amount, @t_state, @t_date, @split_group_id
-                     )
+            INSERT INTO transactions (t_id, dni_sender, dni_receiver, t_message, amount, t_state, t_date,
+                                      split_group_id)
+            VALUES (@t_id, @dni_sender, @dni_receiver, @t_message,
+                    @amount, @t_state, @t_date, @split_group_id)
         `;
         try {
             let pool = await sql.connect(sqlConfig.config);
@@ -42,7 +40,7 @@ class TransactionsRepository{
                 .input('dni_sender', sql.NVarChar(9), newTransaction.dni_sender)
                 .input('dni_receiver', sql.NVarChar(9), newTransaction.dni_receiver)
                 .input('t_message', sql.NVarChar(200), newTransaction.t_message)
-                .input('amount', sql.Decimal(18,2), newTransaction.amount)
+                .input('amount', sql.Decimal(18, 2), newTransaction.amount)
                 .input('t_state', sql.NVarChar(8), newTransaction.t_state)
                 .input('t_date', sql.DateTime2, newTransaction.t_date)
                 .input('split_group_id', sql.UniqueIdentifier, newTransaction.split_group_id)
@@ -57,9 +55,10 @@ class TransactionsRepository{
 
     async GetTransactionById(t_id) {
         const query = `
-      SELECT * FROM transactions
-      WHERE t_id = @t_id
-    `;
+            SELECT *
+            FROM transactions
+            WHERE t_id = @t_id
+        `;
         try {
             let pool = await sql.connect(sqlConfig.config);
             const result = await pool.request()
@@ -76,10 +75,10 @@ class TransactionsRepository{
 
     async UpdateTransactionStatus(t_id, newStatus) {
         const query = `
-      UPDATE transactions
-      SET t_state = @newStatus
-      WHERE t_id = @t_id
-    `;
+            UPDATE transactions
+            SET t_state = @newStatus
+            WHERE t_id = @t_id
+        `;
         try {
             let pool = await sql.connect(sqlConfig.config);
             await pool.request()
@@ -97,9 +96,11 @@ class TransactionsRepository{
 
     async GetPendingTransactionsBySender(dni) {
         const query = `
-    SELECT * FROM transactions
-    WHERE dni_sender = @dni AND t_state = 'PENDING'
-  `;
+            SELECT *
+            FROM transactions
+            WHERE dni_sender = @dni
+              AND t_state = 'PENDING'
+        `;
         try {
             let pool = await sql.connect(sqlConfig.config);
             const result = await pool.request()
@@ -118,9 +119,9 @@ class TransactionsRepository{
             let pool = await sql.connect(sqlConfig.config);
             let result = await pool.request()
                 .query(`
-                SELECT t_id, dni_sender, dni_receiver, t_message, amount, t_state, t_date
-                FROM transactions
-            `);
+                    SELECT t_id, dni_sender, dni_receiver, t_message, amount, t_state, t_date
+                    FROM transactions
+                `);
             await pool.close();
             return result.recordset;
         } catch (err) {
@@ -131,7 +132,9 @@ class TransactionsRepository{
 
     async GetBySplitGroup(splitGroupId) {
         const query = `
-            SELECT * FROM transactions WHERE split_group_id = @split_group_id
+            SELECT *
+            FROM transactions
+            WHERE split_group_id = @split_group_id
         `;
         let pool = await sql.connect(sqlConfig.config);
         const result = await pool.request()
@@ -141,5 +144,34 @@ class TransactionsRepository{
         return result.recordset;
     }
 
+    async GetSplitTransactionsByReceiver({dni}) {
+        const query = `
+            SELECT t_id,
+                   dni_sender,
+                   dni_receiver,
+                   t_message,
+                   amount,
+                   t_state,
+                   t_date,
+                   split_group_id
+            FROM transactions
+            WHERE dni_receiver = @dni
+              AND split_group_id IS NOT NULL
+        `;
+
+        try {
+            const pool = await sql.connect(sqlConfig.config);
+            const result = await pool.request()
+                .input('dni', sql.NVarChar(9), dni)
+                .query(query);
+            await pool.close();
+            return result.recordset;
+        } catch (error) {
+            console.error('Error fetching split transactions by receiver:', error);
+            throw error;
+        }
+    }
+
 }
+
 module.exports = TransactionsRepository;
