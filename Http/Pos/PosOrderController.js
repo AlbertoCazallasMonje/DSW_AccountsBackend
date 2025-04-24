@@ -41,33 +41,28 @@ class PosOrderController {
 
     async PayOrder(req, res) {
         try {
-            const common        = new CommonController();
-            const { sessionToken, actionToken, orderId, paymentMethodId } = req.body;
+            const common = new CommonController();
+            const { sessionToken, actionToken, orderId, paymentMethodId, transactionId } = req.body;
 
-            const vs = await common.ValidateSession(sessionToken);
-            if (!vs.success) throw new Error(vs.error);
+            await common.ValidateSession(sessionToken);
+            await common.ValidateActionToken(sessionToken, actionToken, 'PAY-POS-ORDER');
 
-            const rt = await common.RequestToken(sessionToken, 'FIND-USER');
-            if (!rt.success) throw new Error(rt.error);
-            const fu = await common.FindUser(sessionToken, rt.data.actionToken);
-            if (!fu.success) throw new Error(fu.error);
-            const buyerDni = fu.dni;
+            const buyerDni = (await common.FindUser(
+                sessionToken,
+                (await common.RequestToken(sessionToken,'FIND-USER')).data.actionToken
+            )).dni;
 
-            const at = await common.ValidateActionToken(sessionToken, actionToken, 'PAY-POS-ORDER');
-            if (!at.success) throw new Error(at.error);
-
-            const posRepo = new PosOrdersRepository();
-            const txRepo  = new TransactionsRepository();
-            const accRepo = new AccountRepository();
-
-            const payer = new PayPosOrder(posRepo, txRepo, accRepo);
-            const { transactionId, method } =
-                await payer.Execute(orderId, buyerDni, paymentMethodId);
+            const payer = new PayPosOrder(
+                new PosOrdersRepository(),
+                new (require("../../Infrastructure/Transactions/TransactionsRepository"))(),
+                new AccountRepository()
+            );
+            const result = await payer.Execute(orderId, buyerDni, paymentMethodId, transactionId);
 
             return res.status(200).json({
-                message:       'POS Order successfully payed',
-                transactionId,
-                method
+                message:       'POS Order successfully paid',
+                transactionId: result.transactionId,
+                method:        result.method
             });
         } catch (err) {
             return res.status(400).json({ error: err.message });

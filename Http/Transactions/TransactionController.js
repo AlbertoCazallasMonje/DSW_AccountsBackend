@@ -58,9 +58,9 @@ class TransactionController {
             const accountRepository = new AccountRepository();
             const transactionRepository = new TransactionsRepository();
             const transactionCreator = new TransactionCreator(transactionRepository, accountRepository);
-            await transactionCreator.Execute(sender_dni, receiver_dni, amount);
+            const createdTx = await transactionCreator.Execute(sender_dni, receiver_dni, amount);
 
-            res.status(200).json({message: 'Transaction added successfully'});
+            res.status(200).json({message: 'Transaction added successfully', transactionId: createdTx.t_id});
         } catch (err) {
             res.status(400).json({error: err.message});
         }
@@ -112,9 +112,9 @@ class TransactionController {
 
             const transactionRepository = new TransactionsRepository();
             const moneyRequest = new MoneyRequest(transactionRepository);
-            await moneyRequest.Execute(requester_dni, requested_dni, amount, message);
+            const createdTx = await moneyRequest.Execute(requester_dni, requested_dni, amount, message);
 
-            res.status(200).json({message: 'Transaction added successfully'});
+            res.status(200).json({message: 'Transaction added successfully', transactionId: createdTx.t_id});
         } catch (err) {
             res.status(400).json({error: err.message});
         }
