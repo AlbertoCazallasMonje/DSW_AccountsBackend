@@ -96,20 +96,36 @@ class TransactionsRepository {
 
     async GetPendingTransactionsBySender(dni) {
         const query = `
-            SELECT *
-            FROM transactions
-            WHERE dni_sender = @dni
-              AND t_state = 'PENDING'
+            SELECT
+                t.t_id,
+                t.amount,
+                t.t_message,
+                t.t_state,
+                t.t_date,
+                u.u_name AS senderName
+            FROM transactions t
+                     INNER JOIN users u
+                                ON t.dni_sender = u.u_dni
+            WHERE t.dni_receiver = @dni
+              AND t.t_state = 'PENDING'
+            ORDER BY t.t_date DESC
         `;
         try {
-            let pool = await sql.connect(sqlConfig.config);
+            const pool = await sql.connect(sqlConfig.config);
             const result = await pool.request()
                 .input('dni', sql.NVarChar(9), dni)
                 .query(query);
             await pool.close();
-            return result.recordset;
+            return result.recordset.map(r => ({
+                t_id:       r.t_id,
+                amount:     r.amount,
+                t_message:  r.t_message,
+                t_state:    r.t_state,
+                t_date:     r.t_date,
+                senderName: r.senderName
+            }));
         } catch (error) {
-            console.error("Error fetching pending transactions:", error);
+            console.error("Error fetching pending transactions with senderName:", error);
             throw error;
         }
     }
@@ -144,30 +160,40 @@ class TransactionsRepository {
         return result.recordset;
     }
 
-    async GetSplitTransactionsByReceiver({dni}) {
+    async GetSplitTransactionsByReceiver({ dni }) {
         const query = `
-            SELECT t_id,
-                   dni_sender,
-                   dni_receiver,
-                   t_message,
-                   amount,
-                   t_state,
-                   t_date,
-                   split_group_id
-            FROM transactions
-            WHERE dni_receiver = @dni
-              AND split_group_id IS NOT NULL
+            SELECT
+                t.t_id,
+                t.amount,
+                t.t_message,
+                t.t_state,
+                t.t_date,
+                t.split_group_id,
+                u.u_name AS senderName
+            FROM transactions t
+                     INNER JOIN users u
+                                ON t.dni_sender = u.u_dni
+            WHERE t.dni_receiver = @dni
+              AND t.split_group_id IS NOT NULL
+            ORDER BY t.t_date DESC
         `;
-
         try {
             const pool = await sql.connect(sqlConfig.config);
             const result = await pool.request()
                 .input('dni', sql.NVarChar(9), dni)
                 .query(query);
             await pool.close();
-            return result.recordset;
+            return result.recordset.map(r => ({
+                t_id:         r.t_id,
+                amount:       r.amount,
+                t_message:    r.t_message,
+                t_state:      r.t_state,
+                t_date:       r.t_date,
+                split_group_id: r.split_group_id,
+                senderName:   r.senderName
+            }));
         } catch (error) {
-            console.error('Error fetching split transactions by receiver:', error);
+            console.error('Error fetching split transactions with senderName:', error);
             throw error;
         }
     }
