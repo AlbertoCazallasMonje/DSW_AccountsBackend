@@ -61,6 +61,7 @@ class TransactionController {
             const createdTx = await transactionCreator.Execute(sender_dni, receiver_dni, amount);
 
             res.status(200).json({message: 'Transaction added successfully', transactionId: createdTx.t_id});
+
         } catch (err) {
             res.status(400).json({error: err.message});
         }

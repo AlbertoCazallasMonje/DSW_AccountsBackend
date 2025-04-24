@@ -28,6 +28,7 @@ class TransactionCreator {
                 created_at: new Date()
             };
 
+
             const createdTx =  await this.transactionRepository.CreateTransaction(transaction);
             await this.accountRepository.UpdateBalance({ b_id: senderAccount.b_id }, -amount);
             await this.accountRepository.UpdateBalance({ b_id: receiverAccount.b_id }, amount);

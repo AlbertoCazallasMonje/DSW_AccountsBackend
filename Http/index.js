@@ -17,6 +17,7 @@ const TransactionsController = require('./Transactions/TransactionController');
 const transactionsController = new TransactionsController();
 const PosOrderController = require('./Pos/PosOrderController');
 const posOrderController = new PosOrderController();
+
 const cors = require('cors');
 app.use(cors());
 app.use(express.json());
@@ -48,8 +49,8 @@ router.post('/loadSplitTransactions', transactionsController.LoadSplitTransactio
 // POS
 router.post('/createPosOrder', posOrderController.CreateOrder.bind(posOrderController));
 router.post('/payPosOrder', posOrderController.PayOrder.bind(posOrderController));
-
 router.post('/listPosOrders', posOrderController.ListOrders.bind(posOrderController));
+
 
 // Initialize Server
 const port = config.server.port;
