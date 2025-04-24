@@ -28,9 +28,11 @@ class TransactionCreator {
                 created_at: new Date()
             };
 
-            await this.transactionRepository.CreateTransaction(transaction);
+
+            const createdTx =  await this.transactionRepository.CreateTransaction(transaction);
             await this.accountRepository.UpdateBalance({ b_id: senderAccount.b_id }, -amount);
             await this.accountRepository.UpdateBalance({ b_id: receiverAccount.b_id }, amount);
+            return createdTx;
         } catch (err) {
             console.error('Error while creating transaction.', err);
             throw err;

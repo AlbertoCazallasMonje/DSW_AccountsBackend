@@ -1,3 +1,4 @@
+require('dotenv').config();
 const config = require('../App/Config/Config');
 const express = require('express');
 const swaggerDocs = require("../App/Docs/SwaggerDocs");
@@ -14,6 +15,9 @@ const TopUpsController = require('./TopUps/TopUpsController');
 const topUpsController = new TopUpsController();
 const TransactionsController = require('./Transactions/TransactionController');
 const transactionsController = new TransactionsController();
+const PosOrderController = require('./Pos/PosOrderController');
+const posOrderController = new PosOrderController();
+
 const cors = require('cors');
 app.use(cors());
 app.use(express.json());
@@ -41,6 +45,12 @@ router.post('/loadPendingTransactions', transactionsController.LoadTransactions.
 router.post('/adminLoadTransactionDetails', transactionsController.AdminLoadTransactions.bind(transactionsController));
 router.post('/performBulkTransaction', transactionsController.SplitTransaction.bind(transactionsController));
 router.post('/loadSplitTransactions', transactionsController.LoadSplitTransactions.bind(transactionsController));
+
+// POS
+router.post('/createPosOrder', posOrderController.CreateOrder.bind(posOrderController));
+router.post('/payPosOrder', posOrderController.PayOrder.bind(posOrderController));
+router.post('/listPosOrders', posOrderController.ListOrders.bind(posOrderController));
+
 
 // Initialize Server
 const port = config.server.port;
