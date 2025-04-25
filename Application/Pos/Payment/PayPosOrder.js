@@ -29,7 +29,6 @@ class PayPosOrder {
             const sender   = await this.accountRepo.FindAccountByDni({ dni: buyerDni });
             const receiver = await this.accountRepo.FindAccountByDni({ dni: order.merchant_dni });
             if (!sender || sender.b_balance < order.amount) throw new Error('Insufficient balance');
-            await this.accountRepo.UpdateBalance({ b_id: sender.b_id },   -order.amount);
             await this.accountRepo.UpdateBalance({ b_id: receiver.b_id },  order.amount);
         }
 

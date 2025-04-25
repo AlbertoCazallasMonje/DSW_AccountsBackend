@@ -27,14 +27,23 @@ class TransactionsRepository {
             split_group_id
         };
 
-        const query = `
-            INSERT INTO transactions (t_id, dni_sender, dni_receiver, t_message, amount, t_state, t_date,
-                                      split_group_id)
-            VALUES (@t_id, @dni_sender, @dni_receiver, @t_message,
-                    @amount, @t_state, @t_date, @split_group_id)
-        `;
         try {
             let pool = await sql.connect(sqlConfig.config);
+
+            const blockCheck = await pool.request()
+                .input('blocker', sql.NVarChar(9), receiver_dni)
+                .input('blocked', sql.NVarChar(9), sender_dni)
+                .query(`
+                    SELECT 1
+                    FROM blocked
+                    WHERE blocker_dni = @blocker
+                      AND blocked_dni = @blocked
+                `);
+
+            if (blockCheck.recordset.length > 0) {
+                throw new Error('No puedes crear esta transacción: el usuario te ha bloqueado.');
+            }
+
             await pool.request()
                 .input('t_id', sql.UniqueIdentifier, newTransaction.t_id)
                 .input('dni_sender', sql.NVarChar(9), newTransaction.dni_sender)
@@ -44,11 +53,49 @@ class TransactionsRepository {
                 .input('t_state', sql.NVarChar(8), newTransaction.t_state)
                 .input('t_date', sql.DateTime2, newTransaction.t_date)
                 .input('split_group_id', sql.UniqueIdentifier, newTransaction.split_group_id)
-                .query(query);
+                .query(`
+                    INSERT INTO transactions (
+                        t_id, dni_sender, dni_receiver, t_message,
+                        amount, t_state, t_date, split_group_id
+                    ) VALUES (
+                                 @t_id, @dni_sender, @dni_receiver, @t_message,
+                                 @amount, @t_state, @t_date, @split_group_id
+                             )
+                `);
+
+            if (newTransaction.t_state === 'ACCEPTED'
+                && newTransaction.dni_sender !== newTransaction.dni_receiver) {
+
+                await pool.request()
+                    .input('u_dni',        sql.NVarChar(9), newTransaction.dni_sender)
+                    .input('frequent_dni', sql.NVarChar(9), newTransaction.dni_receiver)
+                    .query(`
+                        IF EXISTS (
+                            SELECT 1 FROM frequent_users
+                             WHERE u_dni = @u_dni
+                               AND frequent_dni = @frequent_dni
+                        )
+                        BEGIN
+                            UPDATE frequent_users
+                               SET interaction_count = interaction_count + 1,
+                                   last_updated      = SYSUTCDATETIME()
+                             WHERE u_dni = @u_dni
+                               AND frequent_dni = @frequent_dni;
+                        END
+                        ELSE
+                        BEGIN
+                            INSERT INTO frequent_users
+                                (u_dni, frequent_dni, interaction_count, last_updated)
+                            VALUES
+                                (@u_dni, @frequent_dni, 1, SYSUTCDATETIME());
+                        END
+                    `);
+            }
+
             await pool.close();
             return newTransaction;
         } catch (error) {
-            console.error('Error creando transacción con split_group_id:', error);
+            console.error('Error creando transacción:', error);
             throw error;
         }
     }
@@ -74,7 +121,7 @@ class TransactionsRepository {
     }
 
     async UpdateTransactionStatus(t_id, newStatus) {
-        const query = `
+        const updateQuery = `
             UPDATE transactions
             SET t_state = @newStatus
             WHERE t_id = @t_id
@@ -84,16 +131,71 @@ class TransactionsRepository {
             await pool.request()
                 .input('t_id', sql.UniqueIdentifier, t_id)
                 .input('newStatus', sql.NVarChar(8), newStatus)
-                .query(query);
+                .query(updateQuery);
+
+            if (newStatus === 'ACCEPTED') {
+                const txnResult = await pool.request()
+                    .input('t_id', sql.UniqueIdentifier, t_id)
+                    .query(`
+                        SELECT dni_sender, dni_receiver
+                        FROM transactions
+                        WHERE t_id = @t_id
+                    `);
+
+                if (txnResult.recordset.length > 0) {
+                    const { dni_sender, dni_receiver } = txnResult.recordset[0];
+
+                    const blockCheck = await pool.request()
+                        .input('blocker', sql.NVarChar(9), dni_receiver)
+                        .input('blocked', sql.NVarChar(9), dni_sender)
+                        .query(`
+                            SELECT 1
+                            FROM blocked
+                            WHERE blocker_dni = @blocker
+                              AND blocked_dni = @blocked
+                        `);
+
+                    if (blockCheck.recordset.length > 0) {
+                        throw new Error('No puedes aceptar esta transacción: el usuario te ha bloqueado.');
+                    }
+
+                    if (dni_sender !== dni_receiver) {
+                        await pool.request()
+                            .input('u_dni',        sql.NVarChar(9), dni_sender)
+                            .input('frequent_dni', sql.NVarChar(9), dni_receiver)
+                            .query(`
+                                IF EXISTS (
+                                    SELECT 1 FROM frequent_users
+                                     WHERE u_dni = @u_dni
+                                       AND frequent_dni = @frequent_dni
+                                )
+                                BEGIN
+                                    UPDATE frequent_users
+                                       SET interaction_count = interaction_count + 1,
+                                           last_updated      = SYSUTCDATETIME()
+                                     WHERE u_dni = @u_dni
+                                       AND frequent_dni = @frequent_dni;
+                                END
+                                ELSE
+                                BEGIN
+                                    INSERT INTO frequent_users
+                                        (u_dni, frequent_dni, interaction_count, last_updated)
+                                    VALUES
+                                        (@u_dni, @frequent_dni, 1, SYSUTCDATETIME());
+                                END
+                            `);
+                    }
+                }
+            }
+
             await pool.close();
             console.log(`Transaction ${t_id} updated to ${newStatus}`);
             return true;
         } catch (error) {
-            console.error("Error updating transaction status:", error);
+            console.error('Error updating transaction status:', error);
             throw error;
         }
     }
-
     async GetPendingTransactionsBySender(dni) {
         const query = `
             SELECT
