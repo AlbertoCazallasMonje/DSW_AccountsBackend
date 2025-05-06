@@ -15,10 +15,11 @@ class RequestResolver {
         }
 
         if (resolution === 'ACCEPTED') {
-            const senderAccount = await this.accountRepository.FindAccountByDni({ dni: transaction.dni_sender });
+            const senderAccount   = await this.accountRepository.FindAccountByDni({ dni: transaction.dni_sender });
             const receiverAccount = await this.accountRepository.FindAccountByDni({ dni: transaction.dni_receiver });
-            if (!senderAccount || !receiverAccount) {
-                throw new Error("Accounts not found");
+
+            if (senderAccount.b_balance < transaction.amount) {
+                throw new Error("Insufficient balance to accept this request.");
             }
 
             await this.accountRepository.UpdateBalance({ b_id: senderAccount.b_id }, -transaction.amount);

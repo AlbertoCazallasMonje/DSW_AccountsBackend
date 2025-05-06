@@ -183,9 +183,9 @@ class TransactionsRepository {
                    u.u_name AS senderName
             FROM transactions t
                      INNER JOIN users u
-                                ON t.dni_sender = u.u_dni
-            WHERE t.dni_receiver = @dni
-              AND t.t_state = 'PENDING'
+                                ON t.dni_receiver = u.u_dni
+            WHERE t.dni_sender = @dni
+              AND t.t_state    = 'PENDING'
             ORDER BY t.t_date DESC
         `;
         try {
